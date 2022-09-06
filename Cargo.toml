@@ -1,6 +1,6 @@
 [package]
 name = "brightness"
 authors = ["Thatguyjs"]
-description = "Adjust display brightness from the CLI"
-version = "0.1.0"
+description = "Adjust the backlight from the CLI"
+version = "0.2.0"
 edition = "2021"

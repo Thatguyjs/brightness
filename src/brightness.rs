@@ -1,7 +1,7 @@
 // Brightness utility functions
 
 
-use std::{io, fs};
+use std::{io, fs, thread, time::Duration};
 
 
 fn limit<T: PartialOrd>(value: T, min: T, max: T) -> T {
@@ -14,6 +14,10 @@ fn limit<T: PartialOrd>(value: T, min: T, max: T) -> T {
         v if v > max => max,
         v => v
     }
+}
+
+fn interpolate(start: f32, stop: f32, amount: f32) -> f32 {
+    start + (stop - start) * amount
 }
 
 
@@ -37,10 +41,22 @@ pub fn get_brightness_percent() -> io::Result<f32> {
 
 pub fn set_brightness(value: i32) -> io::Result<()> {
     let max = get_max_brightness()?;
-    let value = limit(value, max / 100, max);
+    let brightness = get_brightness()? as f32;
+    let value = limit(value, max / 100, max) as f32;
 
-    // Needs root
-    fs::write("/sys/class/backlight/intel_backlight/brightness", value.to_string())
+    let mut amount = 0f32;
+
+    for _ in 0..100 {
+        let val = interpolate(brightness, value, amount) as i32;
+
+        // Needs root
+        fs::write("/sys/class/backlight/intel_backlight/brightness", val.to_string())?;
+
+        amount += 0.01;
+        thread::sleep(Duration::from_millis(1));
+    }
+
+    Ok(())
 }
 
 pub fn change_brightness(change: i32) -> io::Result<()> {
